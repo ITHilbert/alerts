@@ -1,0 +1,32 @@
+# Changelog
+
+Alle nennenswerten Änderungen am Package `ithilbert/alerts`.
+
+Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
+
+## Unveröffentlicht
+
+### Hinzugefügt
+
+- Port `ITHilbert\Alerts\Contracts\AlertReporter` mit `melde(Meldung $meldung)` zur Auflösung per Dependency Injection.
+- Value Object `ITHilbert\Alerts\Domain\Meldung` mit benannten Parametern `schluessel`, `titel`, `fehlertext`, `details`. Ungültige Schlüssel werfen `UngueltigerSchluessel`.
+- Automatische Erfassung unbehandelter Exceptions über den Exception-Handler (`reportable`). Fingerabdruck aus Klasse, Datei und Zeile, ohne Meldungstext.
+- Log-Erfassung ab Level `critical`, `alert` und `emergency`. Kontext-Schlüssel `alert_key` überschreibt den Fingerabdruck.
+- Exception im Log-Kontext (`exception`) nutzt denselben Fingerabdruck wie die Exception-Erfassung. Dadurch entsteht nur eine Meldung.
+- Log-Fingerabdruck ohne `alert_key` normalisiert Ziffernfolgen (`\d+` wird zu `#`), damit z.B. „Import 17“ und „Import 18“ eine Meldung ergeben.
+- Erfassung von 404 nur bei Referer der eigenen Domain (`APP_URL`) und von 403 nur bei angemeldetem Nutzer.
+- Drosselung pro Fingerabdruck über Cache-Sperre (atomar per `add`), Standard 24 h, mit Zähler und Sammelmeldung „X× seit letzter Meldung“.
+- Befehl `php artisan alerts:reset {fingerabdruck}` zur Freigabe einer Sperre. Mit `--all` werden alle Sperren aufgehoben.
+- Signierter, zeitlich begrenzter Freigabe-Link (Standard 7 Tage) in jeder Nachricht. GET zeigt eine Bestätigungsseite, erst POST mit CSRF-Token gibt frei. Route gedrosselt (`throttle:6,1`).
+- Kanal Mail über Laravel Notifications mit konfigurierbaren Empfängern und optionalem Mailer.
+- Kanal Telegram über Adapter mit Laravels HTTP-Client, synchron, Timeout 5 s, Bot-Token nie im Log.
+- Fehlertext je Kanal schaltbar (`ALERTS_MAIL_FEHLERTEXT` Standard `true`, `ALERTS_TELEGRAM_FEHLERTEXT` Standard `false`).
+- Schalter `ALERTS_ENABLED` zum kompletten Abschalten von Erfassung und Versand.
+- Veröffentlichbare Konfiguration (`alerts-config`) und Vorlagen (`alerts-views`). Die Freigabe-Seiten kommen ohne externe Assets aus.
+- Testsuite auf Basis von Orchestra Testbench.
+
+### Hinweise
+
+- Fehler innerhalb des Packages lösen keine neue Meldung aus (Wiedereintritts-Schutz).
+- Ungültiger `alert_key` im Log-Kontext wird als Warnung geloggt, danach wird auf den abgeleiteten Fingerabdruck zurückgefallen.
+- Schlägt ein Kanal fehl, wird das auf `warning` geloggt. Der andere Kanal wird trotzdem bedient und die Sperre bleibt gesetzt.

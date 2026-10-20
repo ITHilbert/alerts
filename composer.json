@@ -1,0 +1,51 @@
+{
+    "name": "ithilbert/alerts",
+    "type": "library",
+    "license": "MIT",
+    "description": "Zentrale Störungsmeldungen per Mail und Telegram für alle Laravel-Projekte – mit Drosselung und Freigabe.",
+    "keywords": [
+        "it-hilbert",
+        "laravel",
+        "alerts",
+        "monitoring",
+        "telegram",
+        "mail"
+    ],
+    "authors": [
+        {
+            "name": "Jörg Hilbert",
+            "homepage": "https://www.it-hilbert.com",
+            "role": "Developer"
+        }
+    ],
+    "homepage": "https://www.it-hilbert.com",
+    "minimum-stability": "stable",
+    "require": {
+        "php": "^8.5",
+        "laravel/framework": "^12.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^10.0",
+        "phpunit/phpunit": "^11.5 || ^12.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "ITHilbert\\Alerts\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ITHilbert\\Alerts\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "ITHilbert\\Alerts\\AlertsServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
