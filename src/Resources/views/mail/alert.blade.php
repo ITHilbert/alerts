@@ -12,7 +12,7 @@
         <p>Ort: {{ $alert->vorfall->ort }}</p>
     @endif
     @foreach ($alert->vorfall->details as $schluessel => $wert)
-        <p>{{ $schluessel }}: {{ is_bool($wert) ? ($wert ? 'ja' : 'nein') : $wert }}</p>
+        <p style="white-space: pre-line;">{{ $schluessel }}: {{ is_bool($wert) ? ($wert ? 'ja' : 'nein') : $wert }}</p>
     @endforeach
     @if ($mitFehlertext && $alert->vorfall->fehlertext)
         <p style="white-space: pre-wrap;">Fehlertext: {{ $alert->vorfall->fehlertext }}</p>

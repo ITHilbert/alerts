@@ -110,6 +110,25 @@ final class VersandTest extends TestCase
         $this->assertStringNotContainsString('geheime Details', $this->telegramNutzlast());
     }
 
+    public function test_mehrzeilige_details_bleiben_in_der_mail_mehrzeilig_und_escaped(): void
+    {
+        $this->app->make(AlertReporter::class)->melde(new Meldung(
+            schluessel: 'test.mehrzeilig',
+            titel: 'Mehrzeilig',
+            details: ['Was ist zu tun' => "- Erster Schritt\n- <b>Zweiter</b> Schritt"],
+        ));
+
+        $html = (string) $this->mail()->getOriginalMessage()->getHtmlBody();
+
+        $this->assertMatchesRegularExpression(
+            '/Erster Schritt\s*<br\s*\/?>\s*- |white-space:\s*pre-(line|wrap)[^>]*>[^<]*Was ist zu tun:[^<]*Erster Schritt\n- /',
+            $html,
+            'Zeilenumbrüche in Detail-Werten müssen in der HTML-Mail sichtbar bleiben.',
+        );
+        $this->assertStringNotContainsString('<b>Zweiter</b>', $html, 'Detail-Werte bleiben escaped.');
+        $this->assertStringContainsString('&lt;b&gt;Zweiter&lt;/b&gt;', $html);
+    }
+
     public function test_bot_token_steht_nie_in_der_mail(): void
     {
         $this->melde();
