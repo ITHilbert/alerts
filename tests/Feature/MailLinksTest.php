@@ -171,4 +171,26 @@ final class MailLinksTest extends TestCase
         $this->assertSame([], $this->linksMitHref('https://example.com/herkunft'));
         $this->assertStringContainsString('Herkunft: https://example.com/herkunft', $this->mailText($this->mail()));
     }
+
+    // AK4
+    public function test_referer_als_bool_wird_als_ja_nein_text_ausgegeben_ohne_link(): void
+    {
+        $this->meldeMitDetails(['Referer' => false]);
+        $this->assertStringContainsString('Referer: nein', $this->mailText($this->mail()));
+        $this->assertSame([], $this->linksMitHref(''), 'Kein Link ohne Ziel.');
+        foreach ($this->links() as $link) {
+            $this->assertMatchesRegularExpression('#^https?://#', $link['href']);
+        }
+    }
+
+    // AK4
+    public function test_referer_true_wird_als_ja_text_ausgegeben_ohne_link(): void
+    {
+        $this->meldeMitDetails(['Referer' => true]);
+        $this->assertStringContainsString('Referer: ja', $this->mailText($this->mail()));
+        foreach ($this->links() as $link) {
+            $this->assertMatchesRegularExpression('#^https?://#', $link['href']);
+            $this->assertNotSame('ja', $link['text']);
+        }
+    }
 }
