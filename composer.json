@@ -22,10 +22,10 @@
     "minimum-stability": "stable",
     "require": {
         "php": "^8.5",
-        "laravel/framework": "^12.0"
+        "laravel/framework": "^12.0 || ^13.0"
     },
     "require-dev": {
-        "orchestra/testbench": "^10.0",
+        "orchestra/testbench": "^10.0 || ^11.0",
         "phpunit/phpunit": "^11.5 || ^12.0"
     },
     "autoload": {
