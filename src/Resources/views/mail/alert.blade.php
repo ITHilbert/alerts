@@ -6,13 +6,13 @@
     <p>Fingerabdruck: {{ $alert->vorfall->fingerabdruck->wert }}</p>
     <p>Zeitpunkt: {{ $alert->zeitpunkt->format('d.m.Y H:i:s') }}</p>
     @if ($alert->vorfall->url)
-        <p>URL: {{ $alert->vorfall->url }}</p>
+        <p>URL: @include('alerts::mail.adresse', ['wert' => $alert->vorfall->url, 'verlinken' => true])</p>
     @endif
     @if ($alert->vorfall->ort)
         <p>Ort: {{ $alert->vorfall->ort }}</p>
     @endif
     @foreach ($alert->vorfall->details as $schluessel => $wert)
-        <p style="white-space: pre-line;">{{ $schluessel }}: {{ is_bool($wert) ? ($wert ? 'ja' : 'nein') : $wert }}</p>
+        <p style="white-space: pre-line;">{{ $schluessel }}: @include('alerts::mail.adresse', ['wert' => $wert, 'verlinken' => $schluessel === 'Referer'])</p>
     @endforeach
     @if ($mitFehlertext && $alert->vorfall->fehlertext)
         <p style="white-space: pre-wrap;">Fehlertext: {{ $alert->vorfall->fehlertext }}</p>
@@ -22,6 +22,6 @@
     @endif
     <p>
         <a href="{{ $alert->freigabeLink }}">Meldung freigeben</a><br>
-        {{ $alert->freigabeLink }}
+        @include('alerts::mail.adresse', ['wert' => $alert->freigabeLink, 'verlinken' => true])
     </p>
 </div>

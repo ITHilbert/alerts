@@ -4,3 +4,4 @@
 ## Geplant
 
 ## Fertig
+- [mail-links](mail-links/plan.md) — URL, Referer und Freigabe-Adresse in der Mail als Link (2026-10-23)
