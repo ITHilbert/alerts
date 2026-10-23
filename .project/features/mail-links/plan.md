@@ -4,8 +4,8 @@ Spec: [spec.md](spec.md) · Branch: `fix/mail-links`
 
 ## Aufgaben
 - [x] T1 (AK1–AK4) test-writer: Regressionstest, rot nachweisen
-- [ ] T2 (AK1–AK4) [pro] Mail-Vorlage: URL, Referer und Freigabe-Adresse als Link, nur http(s) — Tests: tests/Feature/MailLinksTest.php
-- [ ] T3 GATE + NACHWEIS (Moderator): ganze Suite, gerenderte Mail ansehen; danach `composer update ithilbert/alerts` in it-hilbert.com
+- [x] T2 (AK1–AK4) [pro] Mail-Vorlage: URL, Referer und Freigabe-Adresse als Link, nur http(s) — Tests: tests/Feature/MailLinksTest.php
+- [x] T3 GATE + NACHWEIS (Moderator): ganze Suite, gerenderte Mail ansehen; danach `composer update ithilbert/alerts` in it-hilbert.com
 
 ## Stand
-Spec freigegeben (User 2026-10-23). T1: 12 Tests, 7 rot (fehlender Link); 5 grün begründet („bleibt so“: „Meldung freigeben“, nur http(s), andere Details Text). Hooks: „prüft zusätzlich …/alerts“ im GATE-Log von it-hilbert.com. Nächster Schritt: T2.
+T1: 12 Tests, 7 rot; Nachtrag AK4 (bool-Referer bleibt ja/nein) +2 Tests rot. T2: coder-pro, GATE GRÜN im Paket (12, dann 14) – erster Lauf mit Zeile `PROJEKT:`, Schreibbereich „prüft zusätzlich“ belegt. Partial `mail/adresse.blade.php` verlinkt nur http(s) und setzt bool → ja/nein an einer Stelle. NACHWEIS: ganze Suite 82 grün. Fertig.

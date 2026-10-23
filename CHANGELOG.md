@@ -24,6 +24,7 @@ Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - Schalter `ALERTS_ENABLED` zum kompletten Abschalten von Erfassung und Versand.
 - Veröffentlichbare Konfiguration (`alerts-config`) und Vorlagen (`alerts-views`). Die Freigabe-Seiten kommen ohne externe Assets aus.
 - Testsuite auf Basis von Orchestra Testbench.
+- Mail: URL, Detail `Referer` und die ausgeschriebene Freigabe-Adresse sind klickbare Links (nur `http://`/`https://`, sonst Text). Wer die Mail-Vorlage veröffentlicht hat, übernimmt das neue Partial `mail/adresse.blade.php`.
 
 ### Hinweise
 
