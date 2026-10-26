@@ -32,7 +32,7 @@ final class AlertsServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__.'/Config/alerts.php', 'alerts');
+        $this->fuehreConfigZusammen();
 
         $this->app->singleton(Drosselung::class, CacheDrosselung::class);
         $this->app->singleton(AlertVersand::class, NotificationVersand::class);
@@ -43,8 +43,47 @@ final class AlertsServiceProvider extends ServiceProvider
         $this->app->singleton(AlertReporter::class, StandardAlertReporter::class);
     }
 
+    /**
+     * Paket-Standard unter die Projekt-Config legen: assoziative Arrays rekursiv, Listen ersetzt das Projekt vollständig.
+     */
+    private function fuehreConfigZusammen(): void
+    {
+        // Auch bei gecachter Config: Die Zusammenführung ist idempotent und ändert gecachte Werte nicht.
+        $config = $this->app['config'];
+        $paket = require __DIR__.'/Config/alerts.php';
+
+        $config->set('alerts', $this->mische($paket, (array) $config->get('alerts', [])));
+    }
+
+    /**
+     * @param  array<array-key, mixed>  $standard
+     * @param  array<array-key, mixed>  $projekt
+     * @return array<array-key, mixed>
+     */
+    private function mische(array $standard, array $projekt): array
+    {
+        foreach ($projekt as $schluessel => $wert) {
+            if (
+                is_array($wert)
+                && ! array_is_list($wert)
+                && isset($standard[$schluessel])
+                && is_array($standard[$schluessel])
+                && ! array_is_list($standard[$schluessel])
+            ) {
+                $standard[$schluessel] = $this->mische($standard[$schluessel], $wert);
+            } else {
+                $standard[$schluessel] = $wert;
+            }
+        }
+
+        return $standard;
+    }
+
     public function boot(): void
     {
+        // Erneut zusammenführen: Setzt etwas die Projekt-Config erst nach register() (z. B. Testbench), gilt sie trotzdem.
+        $this->fuehreConfigZusammen();
+
         $this->loadViewsFrom(__DIR__.'/Resources/views', 'alerts');
 
         $this->publishes([
