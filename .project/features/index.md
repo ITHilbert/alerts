@@ -1,4 +1,5 @@
 ## In Arbeit
+- [projekt-config](projekt-config/plan.md) — Projekt-Config nur mit abweichenden Schlüsseln (rekursiv, Listen ersetzen), Kanäle je Quelle (2026-10-26)
 - [grundgeruest](grundgeruest/plan.md) — Erfassung, Drosselung, Mail + Telegram, Freigabe (2026-10-20)
 
 ## Geplant

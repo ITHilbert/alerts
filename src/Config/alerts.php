@@ -25,6 +25,19 @@ return [
 
     /*
     |---------------------------------------------------------------------------
+    | Kanäle je Quelle
+    |---------------------------------------------------------------------------
+    | Schlüssel: exception, log, meldung, 404, 403. Wert: Liste von Kanälen
+    | ('mail', 'telegram'), z.B. '404' => ['mail'].
+    | Nicht gesetzt = alle aktiven Kanäle aus `channels`. Leere Liste = für diese
+    | Quelle kein Versand. Ein Kanal der Liste wird nur genutzt, wenn er in
+    | `channels` aktiv und eingerichtet ist. Unbekannte Namen werden ignoriert
+    | und als Warnung ins Log geschrieben.
+    */
+    'kanaele' => [],
+
+    /*
+    |---------------------------------------------------------------------------
     | Mail
     |---------------------------------------------------------------------------
     | to: Eine oder mehrere Adressen, kommagetrennt. Leer = Mail-Kanal inaktiv.
