@@ -7,6 +7,7 @@ namespace ITHilbert\Alerts\Erfassung;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Foundation\Http\Events\RequestHandled;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use ITHilbert\Alerts\Application\MeldeAlert;
 use ITHilbert\Alerts\Domain\AlertQuelle;
 use ITHilbert\Alerts\Domain\Fingerabdruck;
@@ -45,7 +46,25 @@ final class StatusErfasser
             return;
         }
 
+        if ($this->normalisierterPfad((string) parse_url((string) $request->headers->get('referer'), PHP_URL_PATH)) === $this->normalisierterPfad($request->getPathInfo())) {
+            return; // Eine Seite, die selbst 404 liefert, kann nicht auf sich verlinkt haben.
+        }
+
+        $muster = array_values(array_filter(
+            (array) $this->config->get('alerts.erfassung.http_404_ignorieren', []),
+            static fn (mixed $eintrag): bool => is_string($eintrag) && $eintrag !== '',
+        ));
+
+        if ($muster !== [] && Str::is($muster, $request->decodedPath(), true)) {
+            return;
+        }
+
         $this->melde($request, AlertQuelle::NichtGefunden, 'Seite nicht gefunden (404)', ['Referer' => $referer]);
+    }
+
+    private function normalisierterPfad(string $pfad): string
+    {
+        return rtrim(mb_strtolower(rawurldecode($pfad)), '/');
     }
 
     /** @param array<string, string> $details */
