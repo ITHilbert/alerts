@@ -14,7 +14,7 @@ Ergänzt AK5 der Spec `grundgeruest`.
 - **AK3 — Ignorierte Pfade:** Gegeben die Konfiguration `alerts.erfassung.http_404_ignorieren` enthält Muster (z. B. `entwickler/*`, `manifest.json`) — Wenn eine 404-Antwort mit internem Referer einen Pfad hat, der einem Muster entspricht — Dann wird keine Meldung verschickt. Muster wie bei `Request::is()`: Pfad ohne führenden `/`, `*` als Platzhalter, Groß- und Kleinschreibung egal.
 - **AK4 — Gegenprobe zu AK3:** Gegeben Muster sind gesetzt — Wenn der Pfad keinem Muster entspricht — Dann wird wie bisher gemeldet.
 - **AK5 — Konfiguration:** Der Standard für `alerts.erfassung.http_404_ignorieren` ist eine leere Liste (Verhalten unverändert). Er lässt sich über die Umgebungsvariable `ALERTS_HTTP_404_IGNORIEREN` als kommagetrennte Liste setzen (Leerzeichen um die Einträge werden entfernt, leere Einträge ignoriert) oder in der veröffentlichten `config/alerts.php` als Array.
-- **AK6 — Doku:** README nennt die beiden Regeln in der Erfassungs-Tabelle (404) und `ALERTS_HTTP_404_IGNORIEREN` in der Konfigurations-Tabelle; CHANGELOG hat einen Eintrag unter „Unreleased“.
+- **AK6 — Doku:** README nennt die beiden Regeln in der Erfassungs-Tabelle (404) und `ALERTS_HTTP_404_IGNORIEREN` in der Konfigurations-Tabelle; CHANGELOG hat einen Eintrag unter „Unveröffentlicht“.
 
 ## Randfälle
 - `ALERTS_HTTP_404_IGNORIEREN` nicht gesetzt und leer gesetzt (`''`): beide ergeben die leere Liste, es wird wie bisher gemeldet.
