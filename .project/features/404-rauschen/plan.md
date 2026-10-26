@@ -3,9 +3,9 @@
 Spec: [spec.md](spec.md) · Branch: `feature/404-rauschen`
 
 ## Aufgaben
-- [ ] T1 (AK1–AK5) test-writer: Tests, rot nachweisen
-- [ ] T2 (AK1–AK6) [pro] `StatusErfasser::nichtGefunden()`: Selbstverweis und ignorierte Pfade; Config-Schlüssel `erfassung.http_404_ignorieren` mit Env-Liste; README, CHANGELOG — Tests: tests/Feature/Http404RauschenTest.php
+- [x] T1 (AK1–AK5) test-writer: Tests, rot nachweisen
+- [x] T2 (AK1–AK6) [pro] `StatusErfasser::nichtGefunden()`: Selbstverweis und ignorierte Pfade; Config-Schlüssel `erfassung.http_404_ignorieren` mit Env-Liste; README, CHANGELOG — Tests: tests/Feature/Http404RauschenTest.php
 - [ ] T3 GATE + NACHWEIS (Moderator): ganze Suite des Pakets; danach in it-hilbert.com `composer update ithilbert/alerts` und `ALERTS_HTTP_404_IGNORIEREN`
 
 ## Stand
-Spec geschrieben (2026-10-26), vom User beauftragt.
+T1 Tests 52ef8b0 (37 Tests, 28 rot wegen fehlenden Verhaltens). T2 [pro]: GATE GRÜN (37 passed); Selbstverweis über normalisierten Pfad, Muster per `Str::is(..., ignoreCase)` auf `decodedPath()`. Paket-Suite 119 grün, Pint ok. Offen: T3 echter Lauf in it-hilbert.com.

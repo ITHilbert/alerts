@@ -90,12 +90,22 @@ return [
     | log: Log-Einträge ab Level `critical`. Darunter sind Einträge Routinerauschen.
     | http_404: Nur bei Referer der eigenen Domain, denn das ist ein kaputter
     | interner Link. Fremde Referer und Bots würden die Mail sonst fluten.
+    | Ebenfalls ohne Meldung: Referer-Pfad gleich dem angefragten Pfad (Groß-/
+    | Kleinschreibung, Prozent-Kodierung, abschließender /, Schema und Query-String
+    | zählen nicht) – eine Seite, die selbst 404 liefert, kann nicht auf sich verlinken.
+    | http_404_ignorieren: Pfad-Muster wie bei Request::is() (ohne führenden /,
+    | * als Platzhalter, Groß-/Kleinschreibung egal), z.B. ['entwickler/*', 'manifest.json'].
+    | Env: kommagetrennt. Leer = alles wie bisher melden.
     | http_403: Nur bei angemeldetem Nutzer. Anonyme 403 sind meist Scanner.
     */
     'erfassung' => [
         'exceptions' => env('ALERTS_EXCEPTIONS', true),
         'log' => env('ALERTS_LOG', true),
         'http_404' => env('ALERTS_HTTP_404', true),
+        'http_404_ignorieren' => array_values(array_filter(
+            array_map('trim', explode(',', (string) env('ALERTS_HTTP_404_IGNORIEREN', ''))),
+            static fn (string $eintrag): bool => $eintrag !== '',
+        )),
         'http_403' => env('ALERTS_HTTP_403', true),
     ],
 

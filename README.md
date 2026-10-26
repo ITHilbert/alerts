@@ -67,6 +67,7 @@ gesetzte Variable.
 | `ALERTS_EXCEPTIONS` | `true` | Unbehandelte Exceptions erfassen. |
 | `ALERTS_LOG` | `true` | Log-Einträge ab Level `critical` erfassen. |
 | `ALERTS_HTTP_404` | `true` | 404 mit internem Referer erfassen. |
+| `ALERTS_HTTP_404_IGNORIEREN` | leer | Kommagetrennte Pfad-Muster, deren 404 nicht gemeldet werden (z.B. `entwickler/*,manifest.json`). Muster wie bei `Request::is()`: ohne führenden `/`, `*` als Platzhalter, Groß-/Kleinschreibung egal. In `config/alerts.php` auch als Array. |
 | `ALERTS_HTTP_403` | `true` | 403 bei angemeldetem Nutzer erfassen. |
 | `ALERTS_FREIGABE_TAGE` | `7` | Gültigkeit des Freigabe-Links in Tagen. |
 
@@ -112,7 +113,7 @@ sein, weil daraus der Freigabe-Link gebaut wird und die Erkennung interner 404-R
 |---|---|---|---|
 | Exception (`Exception`) | Unbehandelte Exception, die Laravel meldet. `dontReport`-Exceptions (z.B. `ValidationException`, `HttpException`) bleiben außen vor. | `exception.<klasse>.<hash>` | Klassenname ohne Namespace |
 | Log (`Log`) | `Log::critical()`, `Log::alert()`, `Log::emergency()`. `error` und darunter lösen nichts aus. | In dieser Reihenfolge: gültiger `alert_key` im Kontext; Exception im Kontext (`exception`) → wie bei der Exception-Erfassung; sonst `log.<meldung-normalisiert>.<hash>` | Log-Meldung |
-| 404 (`404`) | Antwort 404 und Referer gehört zur Domain aus `APP_URL`. Ohne Referer oder mit fremdem Referer keine Meldung. | `404.<pfad>.<hash>` | „Seite nicht gefunden (404)“ |
+| 404 (`404`) | Antwort 404 und Referer gehört zur Domain aus `APP_URL`. Ohne Referer oder mit fremdem Referer keine Meldung. Ebenfalls keine Meldung, wenn der Referer-Pfad dem angefragten Pfad entspricht (Groß-/Kleinschreibung, Prozent-Kodierung, abschließender `/`, Schema und Query-String zählen nicht) oder der Pfad einem Muster aus `alerts.erfassung.http_404_ignorieren` entspricht. | `404.<pfad>.<hash>` | „Seite nicht gefunden (404)“ |
 | 403 (`403`) | Antwort 403 und ein angemeldeter Nutzer. Anonyme 403 werden ignoriert. | `403.<pfad>.<hash>` | „Zugriff verweigert (403)“ |
 | Port (`Meldung`) | Aufruf von `AlertReporter::melde()` | genau der übergebene Schlüssel | `titel` aus `Meldung` |
 

@@ -15,6 +15,7 @@ Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - Exception im Log-Kontext (`exception`) nutzt denselben Fingerabdruck wie die Exception-Erfassung. Dadurch entsteht nur eine Meldung.
 - Log-Fingerabdruck ohne `alert_key` normalisiert Ziffernfolgen (`\d+` wird zu `#`), damit z.B. „Import 17“ und „Import 18“ eine Meldung ergeben.
 - Erfassung von 404 nur bei Referer der eigenen Domain (`APP_URL`) und von 403 nur bei angemeldetem Nutzer.
+- 404-Rauschen: Keine Meldung mehr, wenn der Referer-Pfad dem angefragten Pfad entspricht (Groß-/Kleinschreibung, Prozent-Kodierung, abschließender `/`, Schema, Query-String egal). Neue Einstellung `alerts.erfassung.http_404_ignorieren` (Env `ALERTS_HTTP_404_IGNORIEREN`, kommagetrennt, Muster wie `Request::is()`) für bewusst entfernte Pfade. Standard leer.
 - Drosselung pro Fingerabdruck über Cache-Sperre (atomar per `add`), Standard 24 h, mit Zähler und Sammelmeldung „X× seit letzter Meldung“.
 - Befehl `php artisan alerts:reset {fingerabdruck}` zur Freigabe einer Sperre. Mit `--all` werden alle Sperren aufgehoben.
 - Signierter, zeitlich begrenzter Freigabe-Link (Standard 7 Tage) in jeder Nachricht. GET zeigt eine Bestätigungsseite, erst POST mit CSRF-Token gibt frei. Route gedrosselt (`throttle:6,1`).
