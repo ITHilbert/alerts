@@ -37,7 +37,12 @@ final class KanaeleJeQuelleTest extends TestCase
 
         match ($quelle) {
             'meldung' => $this->app->make(AlertReporter::class)->melde(new Meldung(schluessel: "test.meldung-{$n}", titel: "Meldung {$n}")),
-            'exception' => $this->meldeException(new \RuntimeException("Fehler {$n}")),
+            // Fingerabdruck = Klasse + Datei + Zeile: jeder Aufruf braucht eine andere Stelle bzw. Klasse.
+            'exception' => $this->meldeException(match ($n % 3) {
+                1 => $this->ausnahme("Fehler {$n}"),
+                2 => $this->andereAusnahme("Fehler {$n}"),
+                default => new \LogicException("Fehler {$n}"),
+            }),
             'log' => Log::critical("Kritisch Nummer {$n} Bereich".chr(96 + $n)),
             '404' => $this->get("/gibt-es-nicht-{$n}", ['Referer' => 'http://localhost/start'])->assertNotFound(),
             '403' => $this->actingAs((new User)->forceFill(['id' => 42, 'name' => 'Erika', 'email' => 'e@example.com']))
