@@ -86,6 +86,41 @@ und es erscheint kein Hinweis.
 `APP_NAME` und `APP_ENV` stehen in jeder Nachricht. `APP_URL` muss das öffentliche Projekt-URL
 sein, weil daraus der Freigabe-Link gebaut wird und die Erkennung interner 404-Referer darauf beruht.
 
+## Projekt-Config (`config/alerts.php`)
+
+Eine eigene `config/alerts.php` im Projekt muss nur die **abweichenden Schlüssel** enthalten.
+Alle übrigen behalten den Paket-Standard, auch Schlüssel im selben Abschnitt. Die
+Konfiguration wird rekursiv zusammengeführt. **Listen werden ersetzt**, nicht nach Position
+zusammengeführt: Eine Projekt-Liste für `http_404_ignorieren` oder eine Kanalliste gilt
+vollständig anstelle der Liste des Pakets.
+
+```php
+// config/alerts.php
+return [
+    'erfassung' => [
+        'http_404_ignorieren' => ['entwickler/*', 'manifest.json'],
+    ],
+    'kanaele' => [
+        '404' => ['mail'],                // 404 nur per Mail
+        'exception' => ['mail', 'telegram'],
+        'log' => [],                      // Log-Einträge werden nicht verschickt
+    ],
+];
+```
+
+### Kanäle je Quelle (`alerts.kanaele`)
+
+Schlüssel sind die Quellen `exception`, `log`, `meldung`, `404` und `403`, Werte Listen mit
+`mail` und/oder `telegram`.
+
+- Nicht gesetzt: der Alert geht wie bisher über alle aktiven Kanäle aus `ALERTS_CHANNELS`.
+- Leere Liste: für diese Quelle wird nichts verschickt.
+- Ein Kanal der Liste wird nur genutzt, wenn er in `ALERTS_CHANNELS` aktiv und eingerichtet ist
+  (sonst kein Versand über ihn, keine Warnung).
+- Unbekannte Namen (z.B. `sms`) werden ignoriert und als `warning` ins Log geschrieben.
+  Groß-/Kleinschreibung und Leerzeichen zählen nicht.
+- Drosselung und Freigabe hängen weiter nur am Fingerabdruck, nicht am Kanal.
+
 ## Telegram einrichten
 
 1. **Bot anlegen:** In Telegram den Kontakt `@BotFather` öffnen, `/newbot` senden und Namen

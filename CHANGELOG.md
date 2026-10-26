@@ -8,6 +8,8 @@ Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Hinzugefügt
 
+- Projekt-Config: Eine `config/alerts.php` im Projekt braucht nur die abweichenden Schlüssel, die Paket-Config wird rekursiv zusammengeführt. Listen werden ersetzt, nicht positionsweise gemischt.
+- Kanäle je Quelle: `alerts.kanaele.<quelle>` (`exception`, `log`, `meldung`, `404`, `403`) mit Liste aus `mail`/`telegram`. Nicht gesetzt = alle aktiven Kanäle wie bisher, leere Liste = kein Versand. Unbekannte Kanalnamen werden ignoriert und als Warnung geloggt.
 - Port `ITHilbert\Alerts\Contracts\AlertReporter` mit `melde(Meldung $meldung)` zur Auflösung per Dependency Injection.
 - Value Object `ITHilbert\Alerts\Domain\Meldung` mit benannten Parametern `schluessel`, `titel`, `fehlertext`, `details`. Ungültige Schlüssel werfen `UngueltigerSchluessel`.
 - Automatische Erfassung unbehandelter Exceptions über den Exception-Handler (`reportable`). Fingerabdruck aus Klasse, Datei und Zeile, ohne Meldungstext.
