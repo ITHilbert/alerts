@@ -1,4 +1,5 @@
 ## In Arbeit
+- [404-rauschen](404-rauschen/plan.md) — keine 404-Meldung bei Referer = angefragte URL und für konfigurierte Pfade (2026-10-26)
 - [grundgeruest](grundgeruest/plan.md) — Erfassung, Drosselung, Mail + Telegram, Freigabe (2026-10-20)
 
 ## Geplant
