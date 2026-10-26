@@ -3,7 +3,7 @@
 ## Ausgangslage
 it-hilbert.com, 23.–26.10.2026: 33 von 34 Alert-Mails waren 404 von Bots, die den Referer selbst auf eine URL der eigenen Domain setzen. Dadurch kommen sie durch die Prüfung aus AK5/AK6 (`grundgeruest`), und jede geratene URL erzeugt einen eigenen Fingerabdruck und damit eine eigene Mail. Der einzige echte Fehler im selben Zeitraum (ViewException) ging im Rauschen fast unter. Analyse: `it-hilbert.com/.project/notizen/404-meldungen.md`.
 - 11 Mails: Der Referer ist dieselbe URL wie die angefragte (gleich oder nur in Groß- und Kleinschreibung bzw. Schema anders, z. B. Referer `/access/Access-Programmierer-Brakel` → 301 → angefragt `/access/access-programmierer-brakel`). Eine Seite, die selbst 404 liefert, kann nicht auf sich verlinkt haben.
-- 22 Mails: alte Pfade unter `/entwickler/…`, die es bewusst nicht mehr gibt (it-hilbert.com, Entscheidung 0012).
+- 21 Mails: alte Pfade unter `/entwickler/…` (2 weitere sind Selbstverweise), die es bewusst nicht mehr gibt (it-hilbert.com, Entscheidung 0012).
 
 User 2026-10-26: beide Regeln ins Paket („kannst die Anpassungen direkt vornehmen“). Das hebt das Nicht-Ziel „Filter für 404 bei Umleitungs-Referer – vorerst nicht“ aus `mail-links` (User 2026-10-23) auf.
 Ergänzt AK5 der Spec `grundgeruest`.
