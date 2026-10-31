@@ -9,6 +9,7 @@ use Illuminate\Foundation\Http\Events\RequestHandled;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use ITHilbert\Alerts\Application\MeldeAlert;
+use ITHilbert\Alerts\Application\Schalter;
 use ITHilbert\Alerts\Domain\AlertQuelle;
 use ITHilbert\Alerts\Domain\Fingerabdruck;
 use ITHilbert\Alerts\Domain\Vorfall;
@@ -24,15 +25,15 @@ final class StatusErfasser
 
     public function behandle(RequestHandled $ereignis): void
     {
-        if (! $this->config->get('alerts.enabled')) {
+        if (! Schalter::an($this->config, 'alerts.enabled', true)) {
             return;
         }
 
         $status = $ereignis->response->getStatusCode();
 
-        if ($status === 404 && $this->config->get('alerts.erfassung.http_404')) {
+        if ($status === 404 && Schalter::an($this->config, 'alerts.erfassung.http_404', true)) {
             $this->nichtGefunden($ereignis->request);
-        } elseif ($status === 403 && $this->config->get('alerts.erfassung.http_403') && $this->angemeldet($ereignis->request)) {
+        } elseif ($status === 403 && Schalter::an($this->config, 'alerts.erfassung.http_403', true) && $this->angemeldet($ereignis->request)) {
             $this->melde($ereignis->request, AlertQuelle::Verboten, 'Zugriff verweigert (403)');
         }
     }

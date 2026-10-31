@@ -8,6 +8,7 @@ use Illuminate\Contracts\Config\Repository;
 use Illuminate\Log\Events\MessageLogged;
 use ITHilbert\Alerts\Application\AktuelleAnfrage;
 use ITHilbert\Alerts\Application\MeldeAlert;
+use ITHilbert\Alerts\Application\Schalter;
 use ITHilbert\Alerts\Domain\AlertQuelle;
 use ITHilbert\Alerts\Domain\Fingerabdruck;
 use ITHilbert\Alerts\Domain\Vorfall;
@@ -27,8 +28,8 @@ final class LogErfasser
     public function behandle(MessageLogged $eintrag): void
     {
         if (! in_array($eintrag->level, self::LEVEL, true)
-            || ! $this->config->get('alerts.enabled')
-            || ! $this->config->get('alerts.erfassung.log')) {
+            || ! Schalter::an($this->config, 'alerts.enabled', true)
+            || ! Schalter::an($this->config, 'alerts.erfassung.log', true)) {
             return;
         }
 

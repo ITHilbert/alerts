@@ -26,7 +26,7 @@ final class MeldeAlert
 
     public function ausfuehren(Vorfall $vorfall): void
     {
-        if (! $this->config->get('alerts.enabled', true) || $this->laeuft) {
+        if (! Schalter::an($this->config, 'alerts.enabled', true) || $this->laeuft) {
             return;
         }
 
