@@ -7,6 +7,7 @@ namespace ITHilbert\Alerts\Erfassung;
 use Illuminate\Contracts\Config\Repository;
 use ITHilbert\Alerts\Application\AktuelleAnfrage;
 use ITHilbert\Alerts\Application\MeldeAlert;
+use ITHilbert\Alerts\Application\Schalter;
 use ITHilbert\Alerts\Domain\AlertQuelle;
 use ITHilbert\Alerts\Domain\Fingerabdruck;
 use ITHilbert\Alerts\Domain\Vorfall;
@@ -21,7 +22,7 @@ final class ExceptionErfasser
 
     public function erfasse(\Throwable $e): void
     {
-        if (! $this->config->get('alerts.enabled') || ! $this->config->get('alerts.erfassung.exceptions')) {
+        if (! Schalter::an($this->config, 'alerts.enabled', true) || ! Schalter::an($this->config, 'alerts.erfassung.exceptions', true)) {
             return;
         }
 

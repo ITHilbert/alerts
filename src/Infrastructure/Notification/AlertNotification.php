@@ -6,6 +6,7 @@ namespace ITHilbert\Alerts\Infrastructure\Notification;
 
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use ITHilbert\Alerts\Application\Schalter;
 use ITHilbert\Alerts\Domain\Alert;
 
 /** Bewusst kein ShouldQueue: der Versand muss auch bei ausgefallener Queue funktionieren. */
@@ -47,7 +48,7 @@ final class AlertNotification extends Notification
     {
         return [
             'alert' => $this->alert,
-            'mitFehlertext' => filter_var(config('alerts.'.$this->kanal.'.fehlertext'), FILTER_VALIDATE_BOOL),
+            'mitFehlertext' => Schalter::an(app('config'), 'alerts.'.$this->kanal.'.fehlertext', $this->kanal === self::KANAL_MAIL),
         ];
     }
 }
