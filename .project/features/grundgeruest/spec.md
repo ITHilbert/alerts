@@ -29,7 +29,7 @@ Ein Basis-Package `ithilbert/alerts` (Namespace `ITHilbert\Alerts`), das in jede
 - **AK15 — Synchron:** Versand erfolgt synchron, Telegram mit Timeout ≤ 5 s.
 - **AK16 — Seite bleibt heil:** Schlägt ein Kanal fehl, wird das auf `warning` geloggt (Bot-Token nie im Log), der andere Kanal wird trotzdem bedient, die Sperre bleibt gesetzt, die Anfrage verhält sich wie ohne Meldung.
 - **AK17 — Keine Schleife:** Fehler innerhalb des Alert-Packages lösen keine neue Meldung aus (Wiedereintritts-Schutz).
-- **AK18 — Abschaltbar:** `ALERTS_ENABLED=false` → keine Erfassung, kein Versand.
+- **AK18 — Abschaltbar:** `ALERTS_ENABLED=false` → keine Erfassung, kein Versand. Ebenso bei `0`, `off`, `no` (Wertung wie `filter_var(…, FILTER_VALIDATE_BOOL)`), für Erfassung und Versand gleich; `true`, `1`, `on`, `yes` oder nicht gesetzt → aktiv. Dieselbe Wertung gilt für alle Bool-Schalter der Config (`ALERTS_EXCEPTIONS`, `ALERTS_LOG`, `ALERTS_HTTP_404`, `ALERTS_HTTP_403`, `ALERTS_MAIL_FEHLERTEXT`, `ALERTS_TELEGRAM_FEHLERTEXT`). *Ergänzt 2026-10-31 (Dashboard #91).*
 - **AK19 — Vorlagen:** Mail- und Telegram-Vorlage per `vendor:publish --tag=alerts-views` überschreibbar. Bestätigungsseite ohne externe Assets (DSGVO).
 
 ## Randfälle

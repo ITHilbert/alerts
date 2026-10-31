@@ -52,7 +52,7 @@ gesetzte Variable.
 
 | Variable | Standard | Bedeutung |
 |---|---|---|
-| `ALERTS_ENABLED` | `true` | `false` schaltet Erfassung und Versand komplett ab. Sinnvoll für lokale Entwicklung und Tests. |
+| `ALERTS_ENABLED` | `true` | `false`, `0`, `off` oder `no` schaltet Erfassung und Versand komplett ab (`true`, `1`, `on`, `yes` oder nicht gesetzt = aktiv; Wertung wie `filter_var` mit `FILTER_VALIDATE_BOOL`, gilt für alle Bool-Schalter). Sinnvoll für lokale Entwicklung und Tests. |
 | `ALERTS_CHANNELS` | `mail,telegram` | Aktive Kanäle, kommagetrennt. Gültig: `mail`, `telegram`. |
 | `ALERTS_MAIL_TO` | leer | Empfänger, kommagetrennt. Leer = Mail-Kanal inaktiv. |
 | `ALERTS_MAILER` | leer | Name eines Mailers aus `config/mail.php`. Leer = `MAIL_MAILER`. |

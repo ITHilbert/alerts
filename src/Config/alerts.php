@@ -11,7 +11,7 @@ return [
     | false = keine Erfassung und kein Versand. Gedacht für lokale Entwicklung
     | und Tests, damit dort keine echten Meldungen verschickt werden.
     */
-    'enabled' => env('ALERTS_ENABLED', true),
+    'enabled' => filter_var(env('ALERTS_ENABLED', true), FILTER_VALIDATE_BOOL),
 
     /*
     |---------------------------------------------------------------------------
@@ -50,7 +50,7 @@ return [
     'mail' => [
         'to' => env('ALERTS_MAIL_TO'),
         'mailer' => env('ALERTS_MAILER'),
-        'fehlertext' => env('ALERTS_MAIL_FEHLERTEXT', true),
+        'fehlertext' => filter_var(env('ALERTS_MAIL_FEHLERTEXT', true), FILTER_VALIDATE_BOOL),
     ],
 
     /*
@@ -69,7 +69,7 @@ return [
     'telegram' => [
         'bot_token' => env('ALERTS_TELEGRAM_BOT_TOKEN'),
         'chat_id' => env('ALERTS_TELEGRAM_CHAT_ID'),
-        'fehlertext' => env('ALERTS_TELEGRAM_FEHLERTEXT', false),
+        'fehlertext' => filter_var(env('ALERTS_TELEGRAM_FEHLERTEXT', false), FILTER_VALIDATE_BOOL),
         'api_url' => 'https://api.telegram.org',
         'timeout' => env('ALERTS_TELEGRAM_TIMEOUT', 5),
         'connect_timeout' => env('ALERTS_TELEGRAM_CONNECT_TIMEOUT', 3),
@@ -112,14 +112,14 @@ return [
     | http_403: Nur bei angemeldetem Nutzer. Anonyme 403 sind meist Scanner.
     */
     'erfassung' => [
-        'exceptions' => env('ALERTS_EXCEPTIONS', true),
-        'log' => env('ALERTS_LOG', true),
-        'http_404' => env('ALERTS_HTTP_404', true),
+        'exceptions' => filter_var(env('ALERTS_EXCEPTIONS', true), FILTER_VALIDATE_BOOL),
+        'log' => filter_var(env('ALERTS_LOG', true), FILTER_VALIDATE_BOOL),
+        'http_404' => filter_var(env('ALERTS_HTTP_404', true), FILTER_VALIDATE_BOOL),
         'http_404_ignorieren' => array_values(array_filter(
             array_map('trim', explode(',', (string) env('ALERTS_HTTP_404_IGNORIEREN', ''))),
             static fn (string $eintrag): bool => $eintrag !== '',
         )),
-        'http_403' => env('ALERTS_HTTP_403', true),
+        'http_403' => filter_var(env('ALERTS_HTTP_403', true), FILTER_VALIDATE_BOOL),
     ],
 
     /*
