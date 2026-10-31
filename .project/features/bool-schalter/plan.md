@@ -6,7 +6,7 @@ Fehlerbild: `src/Config/alerts.php` liest `env('ALERTS_ENABLED', true)` ohne Cas
 
 ## Aufgaben
 - [ ] T1 (AK18) test-writer: Regressionstest — Tests: `tests/Feature/BoolSchalterTest.php`
-- [ ] T2 (AK18) [junior] Bool-Schalter in `src/Config/alerts.php` einmal per `filter_var(…, FILTER_VALIDATE_BOOL)` casten; README-Zeile zu `ALERTS_ENABLED` nennt die erlaubten Werte — Tests: `tests/Feature/BoolSchalterTest.php`
+- [ ] T2 (AK18) [pro] Bool-Schalter in `src/Config/alerts.php` einmal per `filter_var(…, FILTER_VALIDATE_BOOL)` casten; README-Zeile zu `ALERTS_ENABLED` nennt die erlaubten Werte — Tests: `tests/Feature/BoolSchalterTest.php`
 - [ ] T3 NACHWEIS (Moderator)
 
 ## Stand
