@@ -68,6 +68,9 @@ gesetzte Variable.
 | `ALERTS_LOG` | `true` | Log-Einträge ab Level `critical` erfassen. |
 | `ALERTS_HTTP_404` | `true` | 404 mit internem Referer erfassen. |
 | `ALERTS_HTTP_404_IGNORIEREN` | leer | Kommagetrennte Pfad-Muster, deren 404 nicht gemeldet werden (z.B. `entwickler/*,manifest.json`). Muster wie bei `Request::is()`: ohne führenden `/`, `*` als Platzhalter, Groß-/Kleinschreibung egal. In `config/alerts.php` auch als Array. |
+| `ALERTS_HTTP_404_SAMMELN_AB` | `5` | Ab wie vielen meldepflichtigen 404 einer IP im Fenster gesammelt wird: Die ersten `ab` gehen einzeln raus, der nächste löst eine Sammelmeldung aus, alle weiteren im Fenster keine Meldung. Wert ≤ 0 oder nicht numerisch = Sammeln aus. |
+| `ALERTS_HTTP_404_SAMMELN_FENSTER` | `60` | Länge des Zählfensters in Sekunden, ab dem ersten gezählten 404 der IP. Wert ≤ 0 oder nicht numerisch = Sammeln aus. |
+| `ALERTS_IP_KUERZEN` | `false` | IP in 404- und 403-Meldungen gekürzt anzeigen: IPv4 mit letztem Block 0 (`203.0.113.57` → `203.0.113.0`), IPv6 mit den ersten 64 Bit (`2001:db8:1234:5678::`). Nicht kürzbare Werte erscheinen als „unbekannt“. Zählung und Fingerabdruck bleiben je voller IP. |
 | `ALERTS_HTTP_403` | `true` | 403 bei angemeldetem Nutzer erfassen. |
 | `ALERTS_FREIGABE_TAGE` | `7` | Gültigkeit des Freigabe-Links in Tagen. |
 
@@ -78,6 +81,8 @@ Nicht über `.env` einstellbar (nur in `config/alerts.php`):
 - `alerts.drosselung.prefix` (`alerts`) und `alerts.freigabe.prefix` (`alerts`) bestimmen
   Cache-Präfix und URL-Präfix der Freigabe-Routen.
 - `alerts.freigabe.middleware` (Standard `web`, `throttle:6,1`) schützt die Freigabe-Route.
+- `alerts.erfassung.http_404_scanner` ist die Liste der Scanner-Muster (siehe „Was wird erfasst“).
+  Bewusst ohne Umgebungsvariable.
 
 Ein aktiver Kanal ohne vollständige Konfiguration wird still übersprungen. Ist in
 `ALERTS_CHANNELS` also `telegram` gesetzt, ohne Token oder Chat-ID, passiert nichts
@@ -92,13 +97,18 @@ Eine eigene `config/alerts.php` im Projekt muss nur die **abweichenden Schlüsse
 Alle übrigen behalten den Paket-Standard, auch Schlüssel im selben Abschnitt. Die
 Konfiguration wird rekursiv zusammengeführt. **Listen werden ersetzt**, nicht nach Position
 zusammengeführt: Eine Projekt-Liste für `http_404_ignorieren` oder eine Kanalliste gilt
-vollständig anstelle der Liste des Pakets.
+vollständig anstelle der Liste des Pakets. Die Scanner-Muster stehen deshalb unter einem
+**eigenen Schlüssel** `http_404_scanner`: Eine Projekt-Liste in `http_404_ignorieren` ergänzt sie,
+statt sie zu verdrängen. Wer die Scanner-Liste ändern will, setzt `http_404_scanner` selbst –
+eine eigene Liste ersetzt den Standard, `[]` schaltet ihn ab.
 
 ```php
 // config/alerts.php
 return [
     'erfassung' => [
-        'http_404_ignorieren' => ['entwickler/*', 'manifest.json'],
+        'http_404_ignorieren' => ['entwickler/*', 'manifest.json'], // gilt zusätzlich zu http_404_scanner
+        // 'http_404_scanner' => [],        // Scanner-Standard abschalten
+        'http_404_sammeln' => ['ab' => 10], // fenster_sekunden behält den Standard 60
     ],
     'kanaele' => [
         '404' => ['mail'],                // 404 nur per Mail
@@ -148,12 +158,39 @@ Schlüssel sind die Quellen `exception`, `log`, `meldung`, `404` und `403`, Wert
 |---|---|---|---|
 | Exception (`Exception`) | Unbehandelte Exception, die Laravel meldet. `dontReport`-Exceptions (z.B. `ValidationException`, `HttpException`) bleiben außen vor. | `exception.<klasse>.<hash>` | Klassenname ohne Namespace |
 | Log (`Log`) | `Log::critical()`, `Log::alert()`, `Log::emergency()`. `error` und darunter lösen nichts aus. | In dieser Reihenfolge: gültiger `alert_key` im Kontext; Exception im Kontext (`exception`) → wie bei der Exception-Erfassung; sonst `log.<meldung-normalisiert>.<hash>` | Log-Meldung |
-| 404 (`404`) | Antwort 404 und Referer gehört zur Domain aus `APP_URL`. Ohne Referer oder mit fremdem Referer keine Meldung. Ebenfalls keine Meldung, wenn der Referer-Pfad dem angefragten Pfad entspricht (Groß-/Kleinschreibung, Prozent-Kodierung, abschließender `/`, Schema und Query-String zählen nicht) oder der Pfad einem Muster aus `alerts.erfassung.http_404_ignorieren` entspricht. | `404.<pfad>.<hash>` | „Seite nicht gefunden (404)“ |
-| 403 (`403`) | Antwort 403 und ein angemeldeter Nutzer. Anonyme 403 werden ignoriert. | `403.<pfad>.<hash>` | „Zugriff verweigert (403)“ |
+| 404 (`404`) | Antwort 404 und Referer gehört zur Domain aus `APP_URL`. Ohne Referer oder mit fremdem Referer keine Meldung. Ebenfalls keine Meldung, wenn der Referer-Pfad dem angefragten Pfad entspricht (Groß-/Kleinschreibung, Prozent-Kodierung, abschließender `/`, Schema und Query-String zählen nicht) oder der Pfad einem Muster aus `alerts.erfassung.http_404_ignorieren` oder `alerts.erfassung.http_404_scanner` entspricht. Details: `Referer`, `IP`, `User-Agent`. | `404.<pfad>.<hash>` | „Seite nicht gefunden (404)“ |
+| 404-Häufung (`404`) | Mehr als `http_404_sammeln.ab` (Standard 5) meldepflichtige 404 derselben IP innerhalb von `http_404_sammeln.fenster_sekunden` (Standard 60). Genau eine Sammelmeldung je Fenster, gedrosselt wie jede Meldung. Details: `Anzahl` („<n> × 404 innerhalb von <fenster> s“), `Pfade` (höchstens 10, in Reihenfolge des Eintreffens), `IP`, `User-Agent` des auslösenden Aufrufs. | `404.haeufung.<hash>` (je IP, IP nur gehasht) | „Häufung von 404 (eine Quelle)“ |
+| 403 (`403`) | Antwort 403 und ein angemeldeter Nutzer. Anonyme 403 werden ignoriert. Ohne Sammeln und ohne Ignorierlisten. Details: `IP`, `User-Agent`. | `403.<pfad>.<hash>` | „Zugriff verweigert (403)“ |
 | Port (`Meldung`) | Aufruf von `AlertReporter::melde()` | genau der übergebene Schlüssel | `titel` aus `Meldung` |
 
 Bei 404 und 403 wird nur der Pfad für den Fingerabdruck verwendet. Der Query-String fehlt in
 allen Nachrichten. Die 403-Nachricht enthält keine Nutzerdaten (kein Name, keine ID, keine E-Mail).
+
+**Meldepflichtiger 404** heißt: Antwort 404, Referer der eigenen Domain, kein Selbstverweis und kein
+Treffer in `http_404_ignorieren` oder `http_404_scanner`. Nur diese 404 zählen für die Sammelmeldung.
+
+**Scanner-Liste (`http_404_scanner`):** Automatische Scans setzen den Referer oft selbst auf die
+eigene Domain und umgehen so den Referer-Filter. Der Paket-Standard enthält deshalb Muster für
+typische Scanner-Ziele: Umgebungsdateien (`.env`, `*.env`, `.env.*`), `.git`, WordPress
+(`wp-json`, `wp-login.php`, `wp-admin/*`, `xmlrpc.php` …), phpMyAdmin, GraphQL (`graphql`,
+`*/graphql`), falsch aufgelöste `mailto:`/`tel:`-Links und Backups (`*.sql`, `*.bak` …).
+Muster wie bei `http_404_ignorieren` (`Request::is()`, gegen den dekodierten Pfad: `/%2Eenv`
+gilt als `.env`). Gewöhnliche Seitenpfade wie `/wp-tipps` oder `/kontakt` trifft kein Muster.
+
+**IP und User-Agent:** 404-, Sammel- und 403-Meldungen enthalten `IP` (`Request::ip()`) und
+`User-Agent` (auf 200 Zeichen gekürzt, mit „…“). Fehlt ein Wert, steht dort „unbekannt“. In der
+Mail werden beide escaped ausgegeben.
+
+- **Hinter einem Proxy oder Load-Balancer** liefert `Request::ip()` ohne `TrustProxies` die
+  Adresse des Proxys. Dann landen alle Aufrufe in derselben Zählung und es kommt schnell zur
+  Sammelmeldung. Proxy in `bootstrap/app.php` per `$middleware->trustProxies(at: …)` eintragen.
+- **Datenschutz (DSGVO):** Die IP ist ein personenbezogenes Datum. Grundlage ist das berechtigte
+  Interesse an der IT-Sicherheit (Art. 6 Abs. 1 lit. f DSGVO): Die IP hilft, Scans und Angriffe
+  zu erkennen und vor PHP zu sperren (fail2ban, CrowdSec). Sie steht nur in der Meldung und wird
+  nicht gespeichert – die Fensterzählung legt im Cache nur einen Hash ab, der mit dem Fenster
+  abläuft, keine Datenbank, keine Datei. Telegram ist ein Drittanbieter außerhalb der EU; wer das
+  nicht will, schickt 404/403 nur per Mail (`alerts.kanaele`) oder kürzt die IP mit
+  `ALERTS_IP_KUERZEN=true`.
 
 ### Fallstricke bei der Erfassung
 
@@ -169,7 +206,12 @@ allen Nachrichten. Die 403-Nachricht enthält keine Nutzerdaten (kein Name, kein
 - **Ungültiger `alert_key`:** Entspricht der Schlüssel nicht dem Format (siehe unten), wird eine Warnung
   geloggt und der Fingerabdruck wie ohne Schlüssel abgeleitet.
 - **404 je Pfad:** Jede betroffene URL hat einen eigenen Fingerabdruck. Viele tote URLs mit
-  unterschiedlichen IDs erzeugen viele Meldungen.
+  unterschiedlichen IDs erzeugen viele Meldungen – kommen sie von einer IP schnell hintereinander,
+  fasst die Sammelmeldung sie zusammen (die ersten `ab` gehen trotzdem einzeln raus, weil der
+  Versand synchron ist). Viele tote Links, die verschiedene Besucher langsam aufrufen, bleiben
+  einzelne Meldungen.
+- **Cache-Ausfall bei der Fensterzählung:** Dann wird jeder 404 einzeln gemeldet wie ohne Sammeln,
+  und eine Warnung geht ins Log.
 
 ## Nutzung aus anderen Packages
 
@@ -292,6 +334,9 @@ Der Fehlertext ist die technische Meldung einer Exception oder der Parameter `fe
 |---|---|---|---|
 | Mail | `ALERTS_MAIL_FEHLERTEXT` | `true` | Die Mail geht nur an die eigenen Adressen. Der Text hilft bei der Fehlersuche. |
 | Telegram | `ALERTS_TELEGRAM_FEHLERTEXT` | `false` | Telegram ist ein Drittanbieter außerhalb der EU. Fehlertexte können personenbezogene Daten enthalten. |
+
+IP und User-Agent in 404-/403-Meldungen hängen nicht an diesem Schalter, sondern an
+`ALERTS_IP_KUERZEN` (siehe „Was wird erfasst“).
 
 Der Ort (Datei und Zeile) bei Exceptions erscheint unabhängig davon immer.
 

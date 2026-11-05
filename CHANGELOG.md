@@ -27,6 +27,9 @@ Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - Schalter `ALERTS_ENABLED` zum kompletten Abschalten von Erfassung und Versand.
 - Veröffentlichbare Konfiguration (`alerts-config`) und Vorlagen (`alerts-views`). Die Freigabe-Seiten kommen ohne externe Assets aus.
 - Testsuite auf Basis von Orchestra Testbench.
+- Scanner-Liste `alerts.erfassung.http_404_scanner` (nur in `config/alerts.php`, keine Umgebungsvariable): Pfade typischer Scanner (`.env`, `.git`, WordPress, phpMyAdmin, GraphQL, `mailto:`/`tel:`, Backups) werden nicht gemeldet. Eigener Schlüssel, gilt zusätzlich zu `http_404_ignorieren`; eigene Liste ersetzt den Standard, `[]` schaltet ihn ab.
+- Sammelmeldung „Häufung von 404 (eine Quelle)“: Mehr als `alerts.erfassung.http_404_sammeln.ab` (Env `ALERTS_HTTP_404_SAMMELN_AB`, Standard 5) meldepflichtige 404 einer IP innerhalb von `fenster_sekunden` (Env `ALERTS_HTTP_404_SAMMELN_FENSTER`, Standard 60) ergeben genau eine Sammelmeldung mit Anzahl und Pfaden; weitere 404 der IP im Fenster erzeugen keine Meldung. Die Zählung läuft über den Port `Drosselung` (neue Methode `zaehleImFenster()`), im Cache nur mit gehashter IP.
+- 404-, Sammel- und 403-Meldungen enthalten `IP` und `User-Agent` (gekürzt auf 200 Zeichen). Neuer Schalter `ALERTS_IP_KUERZEN` (Standard `false`) kürzt die angezeigte IP.
 - Mail: URL, Detail `Referer` und die ausgeschriebene Freigabe-Adresse sind klickbare Links (nur `http://`/`https://`, sonst Text). Wer die Mail-Vorlage veröffentlicht hat, übernimmt das neue Partial `mail/adresse.blade.php`.
 
 ### Hinweise
@@ -34,3 +37,5 @@ Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - Fehler innerhalb des Packages lösen keine neue Meldung aus (Wiedereintritts-Schutz).
 - Ungültiger `alert_key` im Log-Kontext wird als Warnung geloggt, danach wird auf den abgeleiteten Fingerabdruck zurückgefallen.
 - Schlägt ein Kanal fehl, wird das auf `warning` geloggt. Der andere Kanal wird trotzdem bedient und die Sperre bleibt gesetzt.
+- Eigene Implementierungen von `ITHilbert\Alerts\Application\Drosselung` müssen die neue Methode `zaehleImFenster()` umsetzen.
+- Hinter einem Proxy braucht `Request::ip()` `TrustProxies`, sonst zählen alle Aufrufe als eine Quelle.
