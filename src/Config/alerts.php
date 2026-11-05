@@ -109,6 +109,18 @@ return [
     | http_404_ignorieren: Pfad-Muster wie bei Request::is() (ohne führenden /,
     | * als Platzhalter, Groß-/Kleinschreibung egal), z.B. ['entwickler/*', 'manifest.json'].
     | Env: kommagetrennt. Leer = alles wie bisher melden.
+    | http_404_scanner: Pfade, die automatische Scanner abklopfen (.env, WordPress,
+    | GraphQL, Backups …). Eigener Schlüssel, damit eine Projekt-Liste in
+    | http_404_ignorieren sie nicht verdrängt – beide Listen gelten zusammen.
+    | Muster wie bei http_404_ignorieren. Eigene Liste ersetzt den Standard,
+    | [] schaltet ihn ab. Bewusst ohne Umgebungsvariable.
+    | http_404_sammeln: Mehr als `ab` meldepflichtige 404 einer IP innerhalb von
+    | `fenster_sekunden` ergeben eine Sammelmeldung „Häufung von 404 (eine Quelle)“;
+    | die ersten `ab` gehen einzeln raus, alle weiteren im Fenster gar nicht.
+    | Wert ≤ 0 oder nicht numerisch = Sammeln aus. Gezählt wird im Cache der
+    | Drosselung, die IP nur gehasht; die Einträge laufen mit dem Fenster ab.
+    | ip_kuerzen: IP in 404-/403-Meldungen gekürzt anzeigen (IPv4 letzter Block 0,
+    | IPv6 die ersten 64 Bit). Zählung und Fingerabdruck bleiben je voller IP.
     | http_403: Nur bei angemeldetem Nutzer. Anonyme 403 sind meist Scanner.
     */
     'erfassung' => [
@@ -119,6 +131,28 @@ return [
             array_map('trim', explode(',', (string) env('ALERTS_HTTP_404_IGNORIEREN', ''))),
             static fn (string $eintrag): bool => $eintrag !== '',
         )),
+        'http_404_scanner' => [
+            // Umgebungsdateien und Repository
+            '.env', '.env.*', '*.env', '*/.env.*', '.git', '.git/*', '*/.git/*', '.svn/*', '.ds_store', '*/.ds_store',
+            // WordPress
+            'wp-json', 'wp-json/*', 'wp-login.php', '*/wp-login.php', 'wp-admin', 'wp-admin/*', '*/wp-admin/*',
+            'wp-content/*', '*/wp-content/*', 'wp-includes/*', '*/wp-includes/*', 'wp-config.php', 'wp-config.php.*',
+            'xmlrpc.php', '*/xmlrpc.php',
+            // Datenbank-Werkzeuge und Server-Infos
+            'phpmyadmin', 'phpmyadmin/*', '*/phpmyadmin/*', 'pma/*', 'adminer.php', 'phpinfo.php', 'info.php',
+            'server-status', 'cgi-bin/*', 'vendor/phpunit/*', '*/vendor/phpunit/*',
+            // GraphQL
+            'graphql', 'graphql/*', '*/graphql', '*/graphql/*',
+            // Falsch aufgelöste Links aus Seitentexten
+            'mailto:*', '*/mailto:*', 'tel:*', '*/tel:*',
+            // Backups und Dumps
+            '*.sql', '*.sql.gz', '*.bak', '*.old', '*.swp',
+        ],
+        'http_404_sammeln' => [
+            'ab' => env('ALERTS_HTTP_404_SAMMELN_AB', 5),
+            'fenster_sekunden' => env('ALERTS_HTTP_404_SAMMELN_FENSTER', 60),
+        ],
+        'ip_kuerzen' => filter_var(env('ALERTS_IP_KUERZEN', false), FILTER_VALIDATE_BOOL),
         'http_403' => filter_var(env('ALERTS_HTTP_403', true), FILTER_VALIDATE_BOOL),
     ],
 

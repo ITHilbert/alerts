@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace ITHilbert\Alerts\Infrastructure;
 
+use Carbon\Carbon;
 use Illuminate\Cache\Repository as CacheRepository;
 use Illuminate\Contracts\Cache\Factory;
 use Illuminate\Contracts\Cache\LockProvider;
 use Illuminate\Contracts\Cache\Repository as Cache;
 use Illuminate\Contracts\Config\Repository as Config;
 use ITHilbert\Alerts\Application\Drosselung;
+use ITHilbert\Alerts\Domain\Fensterstand;
 use ITHilbert\Alerts\Domain\Fingerabdruck;
 use Psr\Log\LoggerInterface;
 
@@ -46,6 +48,46 @@ final class CacheDrosselung implements Drosselung
             $this->logger->warning('Alerts: Drosselung nicht verfügbar, Meldung wird ohne Sperre verschickt ('.$e::class.').');
 
             return 0;
+        }
+    }
+
+    public function zaehleImFenster(string $quelle, string $eintrag, int $fensterSekunden, int $merken): ?Fensterstand
+    {
+        try {
+            $cache = $this->cache();
+            $schluessel = $this->schluessel('fenster', $quelle);
+
+            return $this->exklusiv($cache, $schluessel.'-sperre', function () use ($cache, $schluessel, $eintrag, $fensterSekunden, $merken): Fensterstand {
+                $jetzt = Carbon::now()->getTimestamp();
+                $stand = $cache->get($schluessel);
+
+                if (
+                    ! is_array($stand)
+                    || ! is_int($stand['beginn'] ?? null)
+                    || ! is_int($stand['anzahl'] ?? null)
+                    || ! is_array($stand['eintraege'] ?? null)
+                    || $jetzt - $stand['beginn'] >= $fensterSekunden
+                ) {
+                    $stand = ['beginn' => $jetzt, 'anzahl' => 0, 'eintraege' => []];
+                }
+
+                $eintraege = array_values(array_filter($stand['eintraege'], 'is_string'));
+
+                if (count($eintraege) < $merken) {
+                    $eintraege[] = $eintrag;
+                }
+
+                $stand = ['beginn' => $stand['beginn'], 'anzahl' => $stand['anzahl'] + 1, 'eintraege' => $eintraege];
+
+                // Der Eintrag läuft mit dem Fenster ab, nie später.
+                $cache->put($schluessel, $stand, max(1, $stand['beginn'] + $fensterSekunden - $jetzt));
+
+                return new Fensterstand($stand['anzahl'], $eintraege);
+            });
+        } catch (\Throwable $e) {
+            $this->logger->warning('Alerts: Fensterzählung nicht verfügbar, Meldung wird einzeln verschickt ('.$e::class.').');
+
+            return null;
         }
     }
 
@@ -107,15 +149,25 @@ final class CacheDrosselung implements Drosselung
     /** @param \Closure(list<string>): list<string> $aenderung */
     private function indexAendern(Cache $cache, \Closure $aenderung): void
     {
-        $schreibe = fn () => $cache->forever($this->schluessel('index'), $aenderung($this->index($cache)));
+        $this->exklusiv($cache, $this->schluessel('index-sperre'), fn () => $cache->forever($this->schluessel('index'), $aenderung($this->index($cache))));
+    }
+
+    /**
+     * Führt Lesen und Schreiben unter einer Cache-Sperre aus, wenn der Store Sperren kann.
+     *
+     * @template T
+     *
+     * @param  \Closure(): T  $arbeit
+     * @return T
+     */
+    private function exklusiv(Cache $cache, string $sperre, \Closure $arbeit): mixed
+    {
         $store = $cache instanceof CacheRepository ? $cache->getStore() : null;
 
         if ($store instanceof LockProvider) {
-            $store->lock($this->schluessel('index-sperre'), 5)->block(2, $schreibe);
-
-            return;
+            return $store->lock($sperre, 5)->block(2, $arbeit);
         }
 
-        $schreibe();
+        return $arbeit();
     }
 }
