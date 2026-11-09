@@ -173,7 +173,9 @@ Treffer in `http_404_ignorieren` oder `http_404_scanner`. Nur diese 404 zählen 
 eigene Domain und umgehen so den Referer-Filter. Der Paket-Standard enthält deshalb Muster für
 typische Scanner-Ziele: Umgebungsdateien (`.env`, `*.env`, `.env.*`), `.git`, WordPress
 (`wp-json`, `wp-login.php`, `wp-admin/*`, `xmlrpc.php` …), phpMyAdmin, GraphQL (`graphql`,
-`*/graphql`), falsch aufgelöste `mailto:`/`tel:`-Links und Backups (`*.sql`, `*.bak` …).
+`*/graphql`), falsch aufgelöste `mailto:`/`tel:`-Links, Backups (`*.sql`, `*.bak` …) und
+Sitemap-Varianten (`sitemap_index.xml`, `wp-sitemap.xml`, `sitemap.xml.gz`, `sitemaps.xml` …; die
+echte `/sitemap.xml` bleibt meldepflichtig).
 Muster wie bei `http_404_ignorieren` (`Request::is()`, gegen den dekodierten Pfad: `/%2Eenv`
 gilt als `.env`). Gewöhnliche Seitenpfade wie `/wp-tipps` oder `/kontakt` trifft kein Muster.
 
