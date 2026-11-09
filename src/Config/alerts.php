@@ -147,6 +147,10 @@ return [
             'mailto:*', '*/mailto:*', 'tel:*', '*/tel:*',
             // Backups und Dumps
             '*.sql', '*.sql.gz', '*.bak', '*.old', '*.swp',
+            // Sitemap-Scanner (#946): Varianten, die Scanner statt /sitemap.xml abklopfen.
+            // Keine Platzhalter wie sitemap*, sonst trifft es die echte Sitemap.
+            'sitemap_index.xml', 'wp-sitemap.xml', 'sitemap.xml.gz', 'sitemap_index.xml.gz',
+            'sitemap-index.xml', 'sitemap-index.xml.gz', 'sitemaps.xml',
         ],
         'http_404_sammeln' => [
             'ab' => env('ALERTS_HTTP_404_SAMMELN_AB', 5),
