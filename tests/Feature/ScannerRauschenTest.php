@@ -28,6 +28,12 @@ final class ScannerRauschenTest extends TestCase
         '/mailto:%6B%6F%6E%74%61%6B%74%40example.com', '/tel:+495251123456', '/backup.sql', '/index.php.bak',
     ];
 
+    /** AK18 (#946): Sitemap-Pfade, die Scanner abklopfen. */
+    private const SITEMAP_SCANNER_PFADE = [
+        '/sitemap_index.xml', '/wp-sitemap.xml', '/sitemap.xml.gz', '/sitemap_index.xml.gz',
+        '/sitemap-index.xml', '/sitemap-index.xml.gz', '/sitemaps.xml',
+    ];
+
     // ── Helfer ───────────────────────────────────────────────────────────────
 
     private function nutzer(): User
@@ -1096,5 +1102,37 @@ final class ScannerRauschenTest extends TestCase
         foreach (['/wp-tipps', '/kontakt', '/umwelt-graphik'] as $i => $pfad) {
             $this->assertStringContainsString($pfad, $this->mailText($this->mail($i)));
         }
+    }
+
+    // ── Sitemap-Scanner (#946) ───────────────────────────────────────────────
+
+    // AK18
+    public function test_sitemap_scanner_pfade_aus_dem_paket_standard_werden_nicht_gemeldet(): void
+    {
+        foreach (self::SITEMAP_SCANNER_PFADE as $pfad) {
+            $this->anfrage($pfad, weiter: false);
+            $this->assertKeineMeldung();
+        }
+
+        // Gegenprobe: die echte Sitemap und ein normaler Pfad werden gemeldet.
+        $this->anfrage('/sitemap.xml');
+        $this->anfrage('/sitemap-seite');
+
+        $this->assertCount(2, $this->mails());
+        $this->assertCount(2, $this->telegramAnfragen());
+        $this->assertStringContainsString('/sitemap.xml', $this->mailText($this->mail(0)));
+        $this->assertStringContainsString('/sitemap-seite', $this->mailText($this->mail(1)));
+    }
+
+    // AK18
+    public function test_sitemap_scanner_muster_stehen_in_der_scanner_liste(): void
+    {
+        $this->anfrage('/wp-sitemap.xml');
+        $this->assertKeineMeldung();
+
+        // Quelle ändern: ohne Scanner-Liste wird derselbe Pfad gemeldet.
+        config(['alerts.erfassung.http_404_scanner' => []]);
+        $this->anfrage('/wp-sitemap.xml');
+        $this->assertEineMeldung();
     }
 }
