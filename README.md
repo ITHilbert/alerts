@@ -375,6 +375,9 @@ composer install
 vendor/bin/phpunit
 ```
 
+`phpunit.xml` setzt SQLite `:memory:` fest, es wird keine Projekt-Datenbank gebraucht. Im Workspace
+`packages_dev` aus dem Host-Ordner: `php vendor/bin/phpunit -c packages/alerts/phpunit.xml`.
+
 ## Hinweise
 
 - **Versand ist synchron.** Mail und Telegram werden direkt im Request oder Befehl verschickt.
