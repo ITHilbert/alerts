@@ -6,11 +6,11 @@ namespace ITHilbert\Alerts\Tests\Feature;
 
 use Illuminate\Cache\Repository;
 use Illuminate\Foundation\Auth\User;
-use Illuminate\Support\Env;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use ITHilbert\Alerts\Domain\Fingerabdruck;
 use ITHilbert\Alerts\Tests\Fakes\KaputterCacheStore;
+use ITHilbert\Alerts\Tests\LadeKonfig;
 use ITHilbert\Alerts\Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Component\Mailer\SentMessage;
@@ -19,6 +19,8 @@ use Symfony\Component\Mime\Email;
 /** Scanner-404 nicht einzeln melden (#626): Scanner-Liste, Sammelmeldung je IP, IP und User-Agent. */
 final class ScannerRauschenTest extends TestCase
 {
+    use LadeKonfig;
+
     private const IP = '203.0.113.57';
 
     private const SCANNER_PFADE = [
@@ -33,6 +35,14 @@ final class ScannerRauschenTest extends TestCase
         '/sitemap_index.xml', '/wp-sitemap.xml', '/sitemap.xml.gz', '/sitemap_index.xml.gz',
         '/sitemap-index.xml', '/sitemap-index.xml.gz', '/sitemaps.xml',
     ];
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Diese Tests bauen auf 5 Einzelmeldungen je 60 s auf; der Paket-Standard ist ab 1 / 600 s (empfaenger-je-quelle AK5).
+        config(['alerts.erfassung.http_404_sammeln' => ['ab' => 5, 'fenster_sekunden' => 60]]);
+    }
 
     // ── Helfer ───────────────────────────────────────────────────────────────
 
@@ -96,25 +106,6 @@ final class ScannerRauschenTest extends TestCase
         $this->assertInstanceOf(Email::class, $original);
 
         return (string) $original->getHtmlBody();
-    }
-
-    /** @param array<string, string> $env @return array<mixed> */
-    private function konfig(array $env = []): array
-    {
-        $repo = Env::getRepository();
-        $vorher = [];
-        foreach ($env as $name => $wert) {
-            $vorher[$name] = $repo->get($name);
-            $repo->set($name, $wert);
-        }
-
-        try {
-            return require __DIR__.'/../../src/Config/alerts.php';
-        } finally {
-            foreach ($vorher as $name => $wert) {
-                $wert === null ? $repo->clear($name) : $repo->set($name, $wert);
-            }
-        }
     }
 
     // ── A. Standard-Ignorierliste ────────────────────────────────────────────
@@ -511,13 +502,13 @@ final class ScannerRauschenTest extends TestCase
     }
 
     // AK11
-    public function test_einstellungen_haben_die_standardwerte_5_und_60(): void
+    public function test_einstellungen_haben_die_standardwerte_1_und_600(): void
     {
         $sammeln = $this->konfig()['erfassung']['http_404_sammeln'] ?? null;
 
         $this->assertIsArray($sammeln);
-        $this->assertEquals(5, $sammeln['ab'] ?? null);
-        $this->assertEquals(60, $sammeln['fenster_sekunden'] ?? null);
+        $this->assertEquals(1, $sammeln['ab'] ?? null);
+        $this->assertEquals(600, $sammeln['fenster_sekunden'] ?? null);
     }
 
     // AK11
@@ -615,11 +606,11 @@ final class ScannerRauschenTest extends TestCase
         config(['alerts.erfassung.http_404_sammeln' => ['ab' => 3]]);
 
         $this->serie(3, 'a');
-        $this->travel(30)->seconds(); // innerhalb des Standard-Fensters von 60 s
+        $this->travel(30)->seconds(); // innerhalb des Standard-Fensters von 600 s
         $this->anfrage('/a-4');
 
         $this->assertCount(1, $this->haeufungen());
-        $this->assertStringContainsString('innerhalb von 60 s', $this->haeufungMail());
+        $this->assertStringContainsString('innerhalb von 600 s', $this->haeufungMail());
     }
 
     // AK11
@@ -627,10 +618,10 @@ final class ScannerRauschenTest extends TestCase
     {
         config(['alerts.erfassung.http_404_sammeln' => ['fenster_sekunden' => 20]]);
 
-        $this->serie(5, 'a');
-        $this->assertCount(0, $this->haeufungen(), 'Standard ab = 5: die ersten fünf einzeln.');
+        $this->serie(1, 'a');
+        $this->assertCount(0, $this->haeufungen(), 'Standard ab = 1: nur der erste einzeln.');
 
-        $this->anfrage('/a-6');
+        $this->anfrage('/a-2');
         $this->assertCount(1, $this->haeufungen());
         $this->assertStringContainsString('innerhalb von 20 s', $this->haeufungMail());
     }
@@ -640,12 +631,12 @@ final class ScannerRauschenTest extends TestCase
     {
         config(['alerts.erfassung.http_404_sammeln' => []]);
 
-        $this->serie(5, 'a');
+        $this->serie(1, 'a');
         $this->assertCount(0, $this->haeufungen());
 
-        $this->anfrage('/a-6');
+        $this->anfrage('/a-2');
         $this->assertCount(1, $this->haeufungen());
-        $this->assertStringContainsString('innerhalb von 60 s', $this->haeufungMail());
+        $this->assertStringContainsString('innerhalb von 600 s', $this->haeufungMail());
     }
 
     // ── C. IP und User-Agent ─────────────────────────────────────────────────
