@@ -33,14 +33,28 @@ return [
     | Quelle kein Versand. Ein Kanal der Liste wird nur genutzt, wenn er in
     | `channels` aktiv und eingerichtet ist. Unbekannte Namen werden ignoriert
     | und als Warnung ins Log geschrieben.
+    | Env je Quelle: ALERTS_KANAELE_<QUELLE> (kommagetrennt, z.B. 'mail,telegram').
+    | Nicht gesetzt oder leer = Eintrag fehlt (alle aktiven Kanäle).
     */
-    'kanaele' => [],
+    'kanaele' => array_filter(
+        array_map(
+            static function (string $quelle): ?array {
+                $wert = trim((string) env('ALERTS_KANAELE_'.strtoupper($quelle), ''));
+
+                return $wert === '' ? null : array_values(array_filter(array_map('trim', explode(',', $wert)), static fn (string $k): bool => $k !== ''));
+            },
+            array_combine(['exception', 'log', 'meldung', '404', '403'], ['exception', 'log', 'meldung', '404', '403']),
+        ),
+        static fn (?array $liste): bool => $liste !== null,
+    ),
 
     /*
     |---------------------------------------------------------------------------
     | Mail
     |---------------------------------------------------------------------------
     | to: Eine oder mehrere Adressen, kommagetrennt. Leer = Mail-Kanal inaktiv.
+    | to_je_quelle: Empfänger je Quelle (exception, log, meldung, 404, 403), Env
+    | ALERTS_MAIL_TO_<QUELLE>. Leer oder nicht gesetzt = `to`.
     | mailer: null nutzt den Standard-Mailer der App (MAIL_MAILER). Ein eigener
     | Mailer aus config/mail.php ist nur nötig, wenn Alarme anders zugestellt
     | werden sollen als der Rest der App.
@@ -49,6 +63,13 @@ return [
     */
     'mail' => [
         'to' => env('ALERTS_MAIL_TO'),
+        'to_je_quelle' => [
+            'exception' => env('ALERTS_MAIL_TO_EXCEPTION'),
+            'log' => env('ALERTS_MAIL_TO_LOG'),
+            'meldung' => env('ALERTS_MAIL_TO_MELDUNG'),
+            '404' => env('ALERTS_MAIL_TO_404'),
+            '403' => env('ALERTS_MAIL_TO_403'),
+        ],
         'mailer' => env('ALERTS_MAILER'),
         'fehlertext' => filter_var(env('ALERTS_MAIL_FEHLERTEXT', true), FILTER_VALIDATE_BOOL),
     ],
@@ -114,7 +135,8 @@ return [
     | http_404_ignorieren sie nicht verdrängt – beide Listen gelten zusammen.
     | Muster wie bei http_404_ignorieren. Eigene Liste ersetzt den Standard,
     | [] schaltet ihn ab. Bewusst ohne Umgebungsvariable.
-    | http_404_sammeln: Mehr als `ab` meldepflichtige 404 einer IP innerhalb von
+    | http_404_sammeln: Standard ab 1, Fenster 600 s: der erste 404 einer IP geht
+    | einzeln raus. Mehr als `ab` meldepflichtige 404 einer IP innerhalb von
     | `fenster_sekunden` ergeben eine Sammelmeldung „Häufung von 404 (eine Quelle)“;
     | die ersten `ab` gehen einzeln raus, alle weiteren im Fenster gar nicht.
     | Wert ≤ 0 oder nicht numerisch = Sammeln aus. Gezählt wird im Cache der
@@ -153,8 +175,8 @@ return [
             'sitemap-index.xml', 'sitemap-index.xml.gz', 'sitemaps.xml',
         ],
         'http_404_sammeln' => [
-            'ab' => env('ALERTS_HTTP_404_SAMMELN_AB', 5),
-            'fenster_sekunden' => env('ALERTS_HTTP_404_SAMMELN_FENSTER', 60),
+            'ab' => env('ALERTS_HTTP_404_SAMMELN_AB', 1),
+            'fenster_sekunden' => env('ALERTS_HTTP_404_SAMMELN_FENSTER', 600),
         ],
         'ip_kuerzen' => filter_var(env('ALERTS_IP_KUERZEN', false), FILTER_VALIDATE_BOOL),
         'http_403' => filter_var(env('ALERTS_HTTP_403', true), FILTER_VALIDATE_BOOL),

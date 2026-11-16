@@ -6,8 +6,12 @@ Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## Unveröffentlicht
 
+## 1.2.0 – 2026-11-16
+
 ### Hinzugefügt
 
+- Mail-Empfänger je Quelle: `alerts.mail.to_je_quelle.<quelle>` (Env `ALERTS_MAIL_TO_<QUELLE>`), leer = `alerts.mail.to`.
+- Kanäle je Quelle per Env: `ALERTS_KANAELE_<QUELLE>` (kommagetrennt); nicht gesetzt oder leer = alle aktiven Kanäle.
 - Projekt-Config: Eine `config/alerts.php` im Projekt braucht nur die abweichenden Schlüssel, die Paket-Config wird rekursiv zusammengeführt. Listen werden ersetzt, nicht positionsweise gemischt.
 - Kanäle je Quelle: `alerts.kanaele.<quelle>` (`exception`, `log`, `meldung`, `404`, `403`) mit Liste aus `mail`/`telegram`. Nicht gesetzt = alle aktiven Kanäle wie bisher, leere Liste = kein Versand. Unbekannte Kanalnamen werden ignoriert und als Warnung geloggt.
 - Port `ITHilbert\Alerts\Contracts\AlertReporter` mit `melde(Meldung $meldung)` zur Auflösung per Dependency Injection.
@@ -32,6 +36,10 @@ Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - Sammelmeldung „Häufung von 404 (eine Quelle)“: Mehr als `alerts.erfassung.http_404_sammeln.ab` (Env `ALERTS_HTTP_404_SAMMELN_AB`, Standard 5) meldepflichtige 404 einer IP innerhalb von `fenster_sekunden` (Env `ALERTS_HTTP_404_SAMMELN_FENSTER`, Standard 60) ergeben genau eine Sammelmeldung mit Anzahl und Pfaden; weitere 404 der IP im Fenster erzeugen keine Meldung. Die Zählung läuft über den Port `Drosselung` (neue Methode `zaehleImFenster()`), im Cache nur mit gehashter IP.
 - 404-, Sammel- und 403-Meldungen enthalten `IP` und `User-Agent` (gekürzt auf 200 Zeichen). Neuer Schalter `ALERTS_IP_KUERZEN` (Standard `false`) kürzt die angezeigte IP.
 - Mail: URL, Detail `Referer` und die ausgeschriebene Freigabe-Adresse sind klickbare Links (nur `http://`/`https://`, sonst Text). Wer die Mail-Vorlage veröffentlicht hat, übernimmt das neue Partial `mail/adresse.blade.php`.
+
+### Geändert
+
+- 404-Häufung: Standard jetzt `ab` 1 und `fenster_sekunden` 600 (vorher 5/60).
 
 ### Hinweise
 

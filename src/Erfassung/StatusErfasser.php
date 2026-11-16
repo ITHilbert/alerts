@@ -19,9 +19,9 @@ use Psr\Log\LoggerInterface;
 
 final class StatusErfasser
 {
-    private const SAMMELN_AB = 5;
+    private const SAMMELN_AB = 1;
 
-    private const SAMMELN_FENSTER_SEKUNDEN = 60;
+    private const SAMMELN_FENSTER_SEKUNDEN = 600;
 
     /** Höchstzahl der Pfade in einer Sammelmeldung. */
     private const SAMMELN_PFADE = 10;

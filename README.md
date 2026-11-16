@@ -55,6 +55,8 @@ gesetzte Variable.
 | `ALERTS_ENABLED` | `true` | `false`, `0`, `off` oder `no` schaltet Erfassung und Versand komplett ab (`true`, `1`, `on`, `yes` oder nicht gesetzt = aktiv; Wertung wie `filter_var` mit `FILTER_VALIDATE_BOOL`, gilt für alle Bool-Schalter). Sinnvoll für lokale Entwicklung und Tests. |
 | `ALERTS_CHANNELS` | `mail,telegram` | Aktive Kanäle, kommagetrennt. Gültig: `mail`, `telegram`. |
 | `ALERTS_MAIL_TO` | leer | Empfänger, kommagetrennt. Leer = Mail-Kanal inaktiv. |
+| `ALERTS_MAIL_TO_<QUELLE>` | leer | Empfänger je Quelle (`EXCEPTION`, `LOG`, `MELDUNG`, `404`, `403`), kommagetrennt. Leer = `ALERTS_MAIL_TO`. |
+| `ALERTS_KANAELE_<QUELLE>` | nicht gesetzt | Kanäle je Quelle (`EXCEPTION`, `LOG`, `MELDUNG`, `404`, `403`), kommagetrennt, z.B. `mail`. Nicht gesetzt oder leer = alle aktiven Kanäle. |
 | `ALERTS_MAILER` | leer | Name eines Mailers aus `config/mail.php`. Leer = `MAIL_MAILER`. |
 | `ALERTS_MAIL_FEHLERTEXT` | `true` | Fehlertext (Exception-Meldung bzw. Fehlertext des Ports) in der Mail. |
 | `ALERTS_TELEGRAM_BOT_TOKEN` | leer | Token des Bots von BotFather. Leer = Telegram-Kanal inaktiv. |
@@ -68,8 +70,8 @@ gesetzte Variable.
 | `ALERTS_LOG` | `true` | Log-Einträge ab Level `critical` erfassen. |
 | `ALERTS_HTTP_404` | `true` | 404 mit internem Referer erfassen. |
 | `ALERTS_HTTP_404_IGNORIEREN` | leer | Kommagetrennte Pfad-Muster, deren 404 nicht gemeldet werden (z.B. `entwickler/*,manifest.json`). Muster wie bei `Request::is()`: ohne führenden `/`, `*` als Platzhalter, Groß-/Kleinschreibung egal. In `config/alerts.php` auch als Array. |
-| `ALERTS_HTTP_404_SAMMELN_AB` | `5` | Ab wie vielen meldepflichtigen 404 einer IP im Fenster gesammelt wird: Die ersten `ab` gehen einzeln raus, der nächste löst eine Sammelmeldung aus, alle weiteren im Fenster keine Meldung. Wert ≤ 0 oder nicht numerisch = Sammeln aus. |
-| `ALERTS_HTTP_404_SAMMELN_FENSTER` | `60` | Länge des Zählfensters in Sekunden, ab dem ersten gezählten 404 der IP. Wert ≤ 0 oder nicht numerisch = Sammeln aus. |
+| `ALERTS_HTTP_404_SAMMELN_AB` | `1` | Ab wie vielen meldepflichtigen 404 einer IP im Fenster gesammelt wird: Die ersten `ab` gehen einzeln raus, der nächste löst eine Sammelmeldung aus, alle weiteren im Fenster keine Meldung. Wert ≤ 0 oder nicht numerisch = Sammeln aus. |
+| `ALERTS_HTTP_404_SAMMELN_FENSTER` | `600` | Länge des Zählfensters in Sekunden, ab dem ersten gezählten 404 der IP. Wert ≤ 0 oder nicht numerisch = Sammeln aus. |
 | `ALERTS_IP_KUERZEN` | `false` | IP in 404- und 403-Meldungen gekürzt anzeigen: IPv4 mit letztem Block 0 (`203.0.113.57` → `203.0.113.0`), IPv6 mit den ersten 64 Bit (`2001:db8:1234:5678::`). Nicht kürzbare Werte erscheinen als „unbekannt“. Zählung und Fingerabdruck bleiben je voller IP. |
 | `ALERTS_HTTP_403` | `true` | 403 bei angemeldetem Nutzer erfassen. |
 | `ALERTS_FREIGABE_TAGE` | `7` | Gültigkeit des Freigabe-Links in Tagen. |
@@ -108,7 +110,7 @@ return [
     'erfassung' => [
         'http_404_ignorieren' => ['entwickler/*', 'manifest.json'], // gilt zusätzlich zu http_404_scanner
         // 'http_404_scanner' => [],        // Scanner-Standard abschalten
-        'http_404_sammeln' => ['ab' => 10], // fenster_sekunden behält den Standard 60
+        'http_404_sammeln' => ['ab' => 10], // fenster_sekunden behält den Standard 600
     ],
     'kanaele' => [
         '404' => ['mail'],                // 404 nur per Mail
@@ -130,6 +132,12 @@ Schlüssel sind die Quellen `exception`, `log`, `meldung`, `404` und `403`, Wert
 - Unbekannte Namen (z.B. `sms`) werden ignoriert und als `warning` ins Log geschrieben.
   Groß-/Kleinschreibung und Leerzeichen zählen nicht.
 - Drosselung und Freigabe hängen weiter nur am Fingerabdruck, nicht am Kanal.
+- Per Env: `ALERTS_KANAELE_<QUELLE>`, z.B. `ALERTS_KANAELE_404=mail`. Nicht gesetzt oder leer = Eintrag fehlt (alle aktiven Kanäle).
+
+### Mail-Empfänger je Quelle (`alerts.mail.to_je_quelle`)
+
+`alerts.mail.to_je_quelle.<quelle>` (Env `ALERTS_MAIL_TO_<QUELLE>`) überschreibt für diese Quelle
+die Empfänger aus `ALERTS_MAIL_TO`. Leer, nur Leerzeichen oder Kommas = Rückfall auf `ALERTS_MAIL_TO`.
 
 ## Telegram einrichten
 
@@ -159,7 +167,7 @@ Schlüssel sind die Quellen `exception`, `log`, `meldung`, `404` und `403`, Wert
 | Exception (`Exception`) | Unbehandelte Exception, die Laravel meldet. `dontReport`-Exceptions (z.B. `ValidationException`, `HttpException`) bleiben außen vor. | `exception.<klasse>.<hash>` | Klassenname ohne Namespace |
 | Log (`Log`) | `Log::critical()`, `Log::alert()`, `Log::emergency()`. `error` und darunter lösen nichts aus. | In dieser Reihenfolge: gültiger `alert_key` im Kontext; Exception im Kontext (`exception`) → wie bei der Exception-Erfassung; sonst `log.<meldung-normalisiert>.<hash>` | Log-Meldung |
 | 404 (`404`) | Antwort 404 und Referer gehört zur Domain aus `APP_URL`. Ohne Referer oder mit fremdem Referer keine Meldung. Ebenfalls keine Meldung, wenn der Referer-Pfad dem angefragten Pfad entspricht (Groß-/Kleinschreibung, Prozent-Kodierung, abschließender `/`, Schema und Query-String zählen nicht) oder der Pfad einem Muster aus `alerts.erfassung.http_404_ignorieren` oder `alerts.erfassung.http_404_scanner` entspricht. Details: `Referer`, `IP`, `User-Agent`. | `404.<pfad>.<hash>` | „Seite nicht gefunden (404)“ |
-| 404-Häufung (`404`) | Mehr als `http_404_sammeln.ab` (Standard 5) meldepflichtige 404 derselben IP innerhalb von `http_404_sammeln.fenster_sekunden` (Standard 60). Genau eine Sammelmeldung je Fenster, gedrosselt wie jede Meldung. Details: `Anzahl` („<n> × 404 innerhalb von <fenster> s“), `Pfade` (höchstens 10, in Reihenfolge des Eintreffens), `IP`, `User-Agent` des auslösenden Aufrufs. | `404.haeufung.<hash>` (je IP, IP nur gehasht) | „Häufung von 404 (eine Quelle)“ |
+| 404-Häufung (`404`) | Mehr als `http_404_sammeln.ab` (Standard 1) meldepflichtige 404 derselben IP innerhalb von `http_404_sammeln.fenster_sekunden` (Standard 600). Genau eine Sammelmeldung je Fenster, gedrosselt wie jede Meldung. Details: `Anzahl` („<n> × 404 innerhalb von <fenster> s“), `Pfade` (höchstens 10, in Reihenfolge des Eintreffens), `IP`, `User-Agent` des auslösenden Aufrufs. | `404.haeufung.<hash>` (je IP, IP nur gehasht) | „Häufung von 404 (eine Quelle)“ |
 | 403 (`403`) | Antwort 403 und ein angemeldeter Nutzer. Anonyme 403 werden ignoriert. Ohne Sammeln und ohne Ignorierlisten. Details: `IP`, `User-Agent`. | `403.<pfad>.<hash>` | „Zugriff verweigert (403)“ |
 | Port (`Meldung`) | Aufruf von `AlertReporter::melde()` | genau der übergebene Schlüssel | `titel` aus `Meldung` |
 
