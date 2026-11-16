@@ -27,5 +27,6 @@ Task #1295 (Auftrag Joerg #1292, 2026-11-16). Risiko: normal. Selbst freigegeben
 
 ## Entscheidungsspielraum / Entscheidungen
 - **Sammel-Standard (Annahme):** AK „11 Abrufe im Abstand 35 s → höchstens 1 Einzel- und 1 Sammelmeldung“ verlangt `ab` = 1; das Fenster 600 s deckt 11 × 35 s = 385 s ab. Ein zweites, längeres Fenster wäre zusätzlicher Code für dasselbe Ergebnis, daher werden nur die Standardwerte geändert (`ab` 5 → 1, Fenster 60 → 600). Folge: Eine IP mit zwei verschiedenen meldepflichtigen 404 innerhalb von 10 Minuten löst die Sammelmeldung aus; Projekte stellen alte Werte per `ALERTS_HTTP_404_SAMMELN_AB`/`_FENSTER` ein. Umkehrbar über die Env-Werte.
+- **Gleicher Pfad (Entscheidung):** Randfall 3 der früheren Spec (derselbe Pfad zählt im Fenster jedes Mal) bleibt. Lädt eine IP dieselbe tote URL erneut, entsteht damit die Sammelmeldung „2 × 404“; wer das nicht will, stellt `ALERTS_HTTP_404_SAMMELN_AB` höher. Ein Test, der eine einzelne Meldung bei zwei Abrufen derselben URL erwartet (`HttpStatusErfassungTest`), setzt `ab` 5 selbst.
 - Die Standardwerte aus der früheren Spec `alerts-scanner-rauschen` (host `.project/features/`) werden damit ersetzt; die Tests dazu, die den Standard prüfen, werden angepasst.
 - Keine neuen Composer-Pakete.
