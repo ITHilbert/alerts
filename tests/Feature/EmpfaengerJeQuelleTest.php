@@ -197,6 +197,31 @@ final class EmpfaengerJeQuelleTest extends TestCase
         $this->assertLessThanOrEqual(2, count($this->telegramAnfragen()));
     }
 
+    // AK6
+    public function test_derselbe_pfad_zaehlt_im_fenster_einmal_erst_ein_anderer_pfad_loest_die_sammelmeldung_aus(): void
+    {
+        $abrufe = [
+            ['/tote-seite', 'http://localhost/a'],
+            ['/tote-seite', 'http://localhost/a'],
+            ['/tote-seite', 'http://localhost/b'],
+        ];
+        foreach ($abrufe as [$pfad, $referer]) {
+            $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.57', 'HTTP_USER_AGENT' => 'Test/1.0'])
+                ->get($pfad, ['Referer' => $referer])->assertNotFound();
+            $this->travel(5)->seconds();
+        }
+
+        $this->assertCount(1, $this->mails(), 'Derselbe Pfad ergibt eine einzelne Meldung ohne Sammelmeldung.');
+        $this->assertStringContainsString('Seite nicht gefunden (404)', $this->betreff($this->mail(0)));
+
+        // Gegenprobe: ein anderer Pfad derselben IP löst im selben Fenster die Sammelmeldung aus.
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.57', 'HTTP_USER_AGENT' => 'Test/1.0'])
+            ->get('/andere-tote-seite', ['Referer' => 'http://localhost/a'])->assertNotFound();
+
+        $haeufungen = array_filter($this->mails(), fn (SentMessage $m): bool => str_contains($this->betreff($m), 'Häufung von 404 (eine Quelle)'));
+        $this->assertCount(1, $haeufungen);
+    }
+
     // ── Randfälle ────────────────────────────────────────────────────────────
 
     // Randfall 2
