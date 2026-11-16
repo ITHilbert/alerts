@@ -6,6 +6,8 @@ Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## Unveröffentlicht
 
+## 1.2.0 – 2026-11-16
+
 ### Hinzugefügt
 
 - Mail-Empfänger je Quelle: `alerts.mail.to_je_quelle.<quelle>` (Env `ALERTS_MAIL_TO_<QUELLE>`), leer = `alerts.mail.to`.
