@@ -47,6 +47,9 @@ final class HttpStatusErfassungTest extends TestCase
 
     public function test_gleiche_tote_url_von_verschiedenen_seiten_ergibt_eine_meldung(): void
     {
+        // Eine Meldung je URL kommt aus der Fingerabdruck-Drosselung; das Sammeln bekommt dafür die Werte 5 / 60 s.
+        config(['alerts.erfassung.http_404_sammeln' => ['ab' => 5, 'fenster_sekunden' => 60]]);
+
         $this->get('/gibt-es-nicht', ['Referer' => 'http://localhost/a']);
         $this->get('/gibt-es-nicht', ['Referer' => 'http://localhost/b']);
 

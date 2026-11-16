@@ -48,7 +48,11 @@ final class NotificationVersand implements AlertVersand
         $ergebnis = [];
 
         if (in_array(AlertNotification::KANAL_MAIL, $kanaele, true)) {
-            $adressen = array_values(array_filter(array_map('trim', explode(',', (string) $this->config->get('alerts.mail.to')))));
+            $adressen = $this->adressen($this->mailEmpfaengerDerQuelle($alert));
+
+            if ($adressen === []) {
+                $adressen = $this->adressen($this->config->get('alerts.mail.to'));
+            }
 
             if ($adressen !== []) {
                 $ergebnis[AlertNotification::KANAL_MAIL] = (new AnonymousNotifiable)->route('mail', $adressen);
@@ -63,6 +67,20 @@ final class NotificationVersand implements AlertVersand
         }
 
         return $ergebnis;
+    }
+
+    private function mailEmpfaengerDerQuelle(Alert $alert): mixed
+    {
+        $alle = $this->config->get('alerts.mail.to_je_quelle');
+        $quelle = $alert->vorfall->quelle->value;
+
+        return is_array($alle) && array_key_exists($quelle, $alle) ? $alle[$quelle] : null;
+    }
+
+    /** @return list<string> */
+    private function adressen(mixed $wert): array
+    {
+        return array_values(array_filter(array_map('trim', explode(',', is_scalar($wert) ? (string) $wert : ''))));
     }
 
     /**
